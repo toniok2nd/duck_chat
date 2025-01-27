@@ -33,6 +33,7 @@ class DuckChat:
                 "Accept-Encoding": "gzip, deflate, br",
                 "Referer": "https://duckduckgo.com/",
                 "User-Agent": self.user_agent,
+                "x-vqd-4": "",
                 "DNT": "1",
                 "Sec-GPC": "1",
                 "Connection": "keep-alive",
