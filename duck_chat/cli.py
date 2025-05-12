@@ -12,6 +12,7 @@ from .api import DuckChat
 from .exceptions import DuckChatException
 from .models import ModelType
 
+
 HELP_MSG = (
     "\033[1;1m- /help         \033[0mDisplay the help message\n"
     "\033[1;1m- /singleline   \033[0mEnable singleline mode, validate is done by <enter>\n"
@@ -59,10 +60,14 @@ class CLI:
         model = self.read_model_from_conf()
         print(f"Using \033[1;4m{model.value}\033[0m")
         async with DuckChat(model) as chat:
-            print("Type \033[1;4m/help\033[0m to display the help")
+            self.console.print("Type /help to display the help",style='blue')
+            try:
+                await chat.ask_question("")
+            except:
+                pass
 
             while True:
-                print(f"\033[1;4m>>> User input №{self.COUNT}:\033[0m", end="\n")
+                self.console.print(f">>> User input {self.COUNT}:", style="blue")
 
                 user_input = self.get_user_input()
 
@@ -73,10 +78,10 @@ class CLI:
 
                 # empty user input
                 if not user_input:
-                    print("Bad input")
+                    self.console.print("Bad input",style="red")
                     continue
 
-                print(f"\033[1;4m>>> Response №{self.COUNT}:\033[0m", end="\n")
+                self.console.print(f">>> Command Response {self.COUNT}:", style="green")
                 try:
                     if self.STREAM_MODE:
                         async for message in chat.ask_question_stream(user_input):
@@ -114,6 +119,9 @@ class CLI:
             self.INPUT_MODE = "multiline"
             print("Switched to multiline mode, validate is done by EOF <Ctrl+D>")
 
+    def hello(self):
+        print('hello', style='red')
+
     def switch_stream_mode(self, mode: bool) -> None:
         if mode:
             self.STREAM_MODE = True
@@ -124,7 +132,7 @@ class CLI:
 
     async def command_parsing(self, args: list[str], chat: DuckChat) -> None:
         """Recognize command"""
-        print("\033[1;4m>>> Command response:\033[0m")
+        self.console.print(f">>> Command mode Response {self.COUNT}:",style='green')
         match args[0][1:]:
             case "singleline":
                 self.switch_input_mode("singleline")
@@ -150,7 +158,7 @@ class CLI:
                     count = -count
                 if count >= len(chat.vqd):
                     count = len(chat.vqd) - 1
-                print(f"\033[1;4m>>> REDO Response №{count}:\033[0m", end="\n")
+                self.console.print(f">>> REDO Response {self.COUNT}:", style="green")
                 try:
                     if self.STREAM_MODE:
                         async for message in chat.reask_question_stream(count):
