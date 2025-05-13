@@ -12,6 +12,8 @@ from .exceptions import (
 )
 from .models import History, ModelType
 
+import json
+import os
 
 class DuckChat:
     def __init__(
@@ -58,6 +60,25 @@ class DuckChat:
         traceback: TracebackType | None = None,
     ) -> None:
         await self._session.__aexit__(exc_type, exc_value, traceback)
+
+    async def load_history(self,_filename='history.json'):
+        home_folder = os.path.expanduser('~')
+        folder_path=os.path.join(home_folder, '.config','duck_chat')
+        fileHistory=os.path.join(folder_path,_filename)
+        with open(fileHistory,"r") as f:
+            data = f.read()
+            data_encode = data.encode('utf-8')
+            print(f"type(self.history):{type(self.history)}")
+            self.history = msgspec.json.decode(data_encode,type=History)
+            print(f"type(self.history):{type(self.history)}")
+
+    async def save_history(self,_filename='history.json'):
+        home_folder = os.path.expanduser('~')
+        folder_path=os.path.join(home_folder, '.config','duck_chat')
+        os.makedirs(folder_path,exist_ok=True)
+        fileHistory=os.path.join(folder_path,_filename)
+        with open(fileHistory,"w") as f:
+            f.write(msgspec.json.encode(self.history).decode('utf-8'))
 
     async def get_vqd(self) -> None:
         """Get new x-vqd-4 token"""

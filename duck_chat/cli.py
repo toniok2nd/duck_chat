@@ -16,13 +16,15 @@ from .models import ModelType
 
 
 HELP_MSG = (
-    "\033[1;1m- /help         \033[0mDisplay the help message\n"
-    "\033[1;1m- /singleline   \033[0mEnable singleline mode, validate is done by <enter>\n"
-    "\033[1;1m- /multiline    \033[0mEnable multiline mode, validate is done by EOF <Ctrl+D>\n"
-    "\033[1;1m- /stream_on   \033[0mEnable stream mode\n"
-    "\033[1;1m- /stream_off    \033[0mDisable stream mode\n"
-    "\033[1;1m- /quit         \033[0mQuit\n"
-    "\033[1;1m- /retry        \033[0mRegenerate answer to № prompt (default /retry 1)"
+    "- [red]/help         [/red]Display the help message\n"
+    "- [red]/singleline   [/red]Enable singleline mode, validate is done by <enter>\n"
+    "- [red]/multiline    [/red]Enable multiline mode, validate is done by EOF <Ctrl+D>\n"
+    "- [red]/stream_on    [/red]Enable stream mode\n"
+    "- [red]/stream_off   [/red]Disable stream mode\n"
+    "- [red]/quit         [/red]Quit\n"
+    "- [red]/retry        [/red]Regenerate answer to № prompt (default /retry 1)\n"
+    "- [red]/save_history [/red]Save conversation history\n"
+    "- [red]/load_history [/red]Load conversation history\n"
 )
 
 COMMANDS = {
@@ -33,6 +35,8 @@ COMMANDS = {
     "retry",
     "stream_on",
     "stream_off",
+    "save_history",
+    "load_history"
 }
 
 
@@ -80,8 +84,11 @@ class CLI:
 
                 # empty user input
                 if not user_input:
-                    self.console.print("Bad input",style="red")
+                    dead = Emoji('prohibited')
+                    self.console.print(f"{dead} Empty input",style="red")
                     continue
+
+                # process request
                 brain_emoji = Emoji('brain')
                 self.console.print(Panel(f"<<< {brain_emoji} Response {self.COUNT}:", style="white on green"))
                 try:
@@ -134,7 +141,7 @@ class CLI:
 
     async def command_parsing(self, args: list[str], chat: DuckChat) -> None:
         """Recognize command"""
-        self.console.print(f">>> Command mode Response {self.COUNT}:",style='green')
+        self.console.print(Panel(f">>> Command mode Response {self.COUNT}:",style='white on red'))
         match args[0][1:]:
             case "singleline":
                 self.switch_input_mode("singleline")
@@ -144,11 +151,15 @@ class CLI:
                 self.switch_stream_mode(True)
             case "stream_off":
                 self.switch_stream_mode(False)
+            case "save_history":
+                await chat.save_history()
+            case "load_history":
+                await chat.load_history()
             case "quit":
                 print("Quit")
                 sys.exit(0)
             case "help":
-                print(HELP_MSG)
+                self.console.print(HELP_MSG)
             case "retry":
                 if self.COUNT == 1:
                     return
@@ -170,10 +181,12 @@ class CLI:
                         self.answer_print(await chat.reask_question(count))
                 except DuckChatException as e:
                     print(f"Error occurred: {str(e)}")
+                finally:
+                    chat.get_vqd()
                 else:
                     self.COUNT = count + 1
             case _:
-                print("Command doesn't find")
+                self.console.print("Command not found",style="red")
                 print("Type \033[1;4m/help\033[0m to display the help")
 
     def answer_print(self, query: str) -> None:
