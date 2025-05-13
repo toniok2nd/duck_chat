@@ -7,6 +7,8 @@ from pathlib import Path
 
 from rich.console import Console
 from rich.markdown import Markdown
+from rich.panel import Panel
+from rich.emoji import Emoji
 
 from .api import DuckChat
 from .exceptions import DuckChatException
@@ -67,7 +69,7 @@ class CLI:
                 pass
 
             while True:
-                self.console.print(f">>> User input {self.COUNT}:", style="blue")
+                self.console.print(Panel(f">>> User input {self.COUNT}:", style="white on blue"))
 
                 user_input = self.get_user_input()
 
@@ -80,8 +82,8 @@ class CLI:
                 if not user_input:
                     self.console.print("Bad input",style="red")
                     continue
-
-                self.console.print(f">>> Command Response {self.COUNT}:", style="green")
+                brain_emoji = Emoji('brain')
+                self.console.print(Panel(f"<<< {brain_emoji} Response {self.COUNT}:", style="white on green"))
                 try:
                     if self.STREAM_MODE:
                         async for message in chat.ask_question_stream(user_input):
