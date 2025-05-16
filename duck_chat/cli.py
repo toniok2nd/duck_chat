@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import readline
 import sys
+import os
 import tomllib
 from pathlib import Path
 
@@ -9,6 +10,9 @@ from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.emoji import Emoji
+from rich.prompt import Prompt
+from rich.table import Table
+from rich.text import Text
 
 from .api import DuckChat
 from .exceptions import DuckChatException
@@ -19,10 +23,7 @@ HELP_MSG = (
     "- [red]/help         [/red]Display the help message\n"
     "- [red]/singleline   [/red]Enable singleline mode, validate is done by <enter>\n"
     "- [red]/multiline    [/red]Enable multiline mode, validate is done by EOF <Ctrl+D>\n"
-    "- [red]/stream_on    [/red]Enable stream mode\n"
-    "- [red]/stream_off   [/red]Disable stream mode\n"
     "- [red]/quit         [/red]Quit\n"
-    "- [red]/retry        [/red]Regenerate answer to № prompt (default /retry 1)\n"
     "- [red]/save_history [/red]Save conversation history\n"
     "- [red]/load_history [/red]Load conversation history\n"
 )
@@ -32,12 +33,10 @@ COMMANDS = {
     "singleline",
     "multiline",
     "quit",
-    "retry",
-    "stream_on",
-    "stream_off",
     "save_history",
     "load_history"
 }
+#def setCompletion(_list: list[str]):
 
 
 def completer(text: str, state: int) -> str | None:
@@ -57,23 +56,20 @@ class CLI:
         readline.parse_and_bind("tab: complete")
         readline.set_completer(completer)
         self.INPUT_MODE = "singleline"
-        self.STREAM_MODE = False
         self.COUNT = 1
         self.console = Console()
 
     async def run(self) -> None:
         """Base loop program"""
         model = self.read_model_from_conf()
-        print(f"Using \033[1;4m{model.value}\033[0m")
+        self.console.print(f"Using [u b red blink]{model.value}[/u b red blink]")
         async with DuckChat(model) as chat:
             self.console.print("Type /help to display the help",style='blue')
-            try:
-                await chat.ask_question("")
-            except:
-                pass
+            await chat.get_vqd()
 
             while True:
-                self.console.print(Panel(f">>> User input {self.COUNT}:", style="white on blue"))
+                peanuts_emoji = Emoji('peanuts')
+                self.console.print(Panel(f">>> {peanuts_emoji} input {self.COUNT}:", style="white on blue"))
 
                 user_input = self.get_user_input()
 
@@ -92,12 +88,7 @@ class CLI:
                 brain_emoji = Emoji('brain')
                 self.console.print(Panel(f"<<< {brain_emoji} Response {self.COUNT}:", style="white on green"))
                 try:
-                    if self.STREAM_MODE:
-                        async for message in chat.ask_question_stream(user_input):
-                            print(message, flush=True, end="")
-                        print()
-                    else:
-                        self.answer_print(await chat.ask_question(user_input))
+                    self.answer_print(await chat.ask_question(user_input))
                 except DuckChatException as e:
                     print(f"Error occurred: {str(e)}")
                 else:
@@ -131,13 +122,6 @@ class CLI:
     def hello(self):
         print('hello', style='red')
 
-    def switch_stream_mode(self, mode: bool) -> None:
-        if mode:
-            self.STREAM_MODE = True
-            print("Switched to stream mode")
-        else:
-            self.STREAM_MODE = False
-            print("Switched to non stream mode")
 
     async def command_parsing(self, args: list[str], chat: DuckChat) -> None:
         """Recognize command"""
@@ -147,44 +131,15 @@ class CLI:
                 self.switch_input_mode("singleline")
             case "multiline":
                 self.switch_input_mode("multiline")
-            case "stream_on":
-                self.switch_stream_mode(True)
-            case "stream_off":
-                self.switch_stream_mode(False)
             case "save_history":
                 await chat.save_history()
             case "load_history":
-                await chat.load_history()
+                await chat.load_history(self.select_history_file())
             case "quit":
                 print("Quit")
                 sys.exit(0)
             case "help":
                 self.console.print(HELP_MSG)
-            case "retry":
-                if self.COUNT == 1:
-                    return
-                try:
-                    count = int(args[1])
-                except Exception:
-                    count = len(chat.vqd) - 1
-                if count < 0:
-                    count = -count
-                if count >= len(chat.vqd):
-                    count = len(chat.vqd) - 1
-                self.console.print(f">>> REDO Response {self.COUNT}:", style="green")
-                try:
-                    if self.STREAM_MODE:
-                        async for message in chat.reask_question_stream(count):
-                            print(message, flush=True, end="")
-                        print()
-                    else:
-                        self.answer_print(await chat.reask_question(count))
-                except DuckChatException as e:
-                    print(f"Error occurred: {str(e)}")
-                finally:
-                    chat.get_vqd()
-                else:
-                    self.COUNT = count + 1
             case _:
                 self.console.print("Command not found",style="red")
                 print("Type \033[1;4m/help\033[0m to display the help")
@@ -206,6 +161,27 @@ class CLI:
                     print("\033[1;1m GPT3 is deprecated! Use GPT4o\033[0m")
                 return ModelType[model_name]
         return ModelType.Claude
+
+
+    def select_history_file(self) -> str:
+        home_folder = os.path.expanduser('~')
+        folder_path=os.path.join(home_folder, '.config','duck_chat')
+        files = os.listdir(folder_path)
+        tab_files = {str(i):item for i, item in enumerate(files,start=1)}
+        
+        table = Table(show_header=True, header_style="bold bmagenta")
+        table.add_column("N°")
+        table.add_column("filename")
+        for k,v in tab_files.items():
+            table.add_row(k,v)
+        # Print the table
+        self.console.print(table)
+
+        self.console.print()
+        ret = Prompt.ask(prompt=f"Select a file between 1-{len(files)}",
+                         choices=[str(i) for i in range(1,len(files)+1)])
+        return tab_files[ret]
+
 
 
 def safe_entry_point() -> None:
