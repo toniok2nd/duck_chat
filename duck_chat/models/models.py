@@ -18,9 +18,13 @@ class Message(msgspec.Struct):
 class History(msgspec.Struct):
     model: ModelType
     messages: list[Message]
+    vqd: str
 
     def add_input(self, message: str) -> None:
         self.messages.append(Message(Role.user, message))
 
     def add_answer(self, message: str) -> None:
         self.messages.append(Message(Role.assistant, message))
+
+    def ret_data(self):
+        return {"model":self.model, "messages":self.messages}

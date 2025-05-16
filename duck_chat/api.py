@@ -45,10 +45,13 @@ class DuckChat:
                 "TE": "trailers",
             }
         )
-        self.vqd: list[str] = []
-        self.history = History(model, [])
+        self.history = History(model, [], "")
+        self.vqd = ""
         self.__encoder = msgspec.json.Encoder()
         self.__decoder = msgspec.json.Decoder()
+
+    async def set_history(self, _history):
+        self.history = _history
 
     async def __aenter__(self) -> Self:
         return self
@@ -68,15 +71,15 @@ class DuckChat:
         with open(fileHistory,"r") as f:
             data = f.read()
             data_encode = data.encode('utf-8')
-            print(f"type(self.history):{type(self.history)}")
-            self.history = msgspec.json.decode(data_encode,type=History)
-            print(f"type(self.history):{type(self.history)}")
+            await self.set_history(msgspec.json.decode(data_encode,type=History))
+        self.vqd=self.history.vqd
 
     async def save_history(self,_filename='history.json'):
         home_folder = os.path.expanduser('~')
         folder_path=os.path.join(home_folder, '.config','duck_chat')
         os.makedirs(folder_path,exist_ok=True)
         fileHistory=os.path.join(folder_path,_filename)
+        self.history.vqd=self.vqd
         with open(fileHistory,"w") as f:
             f.write(msgspec.json.encode(self.history).decode('utf-8'))
 
@@ -94,21 +97,22 @@ class DuckChat:
                 else:
                     raise RatelimitException(err_message)
             if "x-vqd-4" in response.headers:
-                self.vqd.append(response.headers["x-vqd-4"])
-            else:
-                raise DuckChatException("No x-vqd-4")
+                self.vqd=response.headers["x-vqd-4"]
 
     async def get_answer(self) -> str:
         """Get message answer from chatbot"""
+        ddata=self.__encoder.encode(self.history.ret_data())
+
         async with self._session.post(
             "https://duckduckgo.com/duckchat/v1/chat",
-            headers={
-                "Content-Type": "application/json",
-                "x-vqd-4": self.vqd[-1],
+            headers={"Content-Type": "application/json",
+                "x-vqd-4": self.vqd,
             },
-            data=self.__encoder.encode(self.history),
+            data=ddata
         ) as response:
             res = await response.read()
+            if "x-vqd-4" in response.headers:
+                self.vqd=response.headers["x-vqd-4"]
             if response.status == 429:
                 raise RatelimitException(res.decode())
             try:
@@ -131,17 +135,13 @@ class DuckChat:
                         raise RatelimitException(err_message)
                     raise DuckChatException(err_message)
                 message.append(x.get("message", ""))
-        self.vqd.append(response.headers.get("x-vqd-4", ""))
+        #self.vqd.append(response.headers.get("x-vqd-4", ""))
         return "".join(message)
 
     async def ask_question(self, query: str) -> str:
         """Get answer from chat AI"""
-        if not self.vqd:
-            await self.get_vqd()
         self.history.add_input(query)
-
         message = await self.get_answer()
-
         self.history.add_answer(message)
         return message
 
@@ -166,67 +166,3 @@ class DuckChat:
 
         return message
 
-    async def stream_answer(self) -> AsyncGenerator[str, None]:
-        """Stream answer from chatbot"""
-        async with self._session.post(
-            "https://duckduckgo.com/duckchat/v1/chat",
-            headers={
-                "Content-Type": "application/json",
-                "x-vqd-4": self.vqd[-1],
-            },
-            data=self.__encoder.encode(self.history),
-        ) as response:
-            if response.status == 429:
-                raise RatelimitException(await response.text())
-            try:
-                async for line in response.content:
-                    if line.startswith(b"data: "):
-                        chunk = line[6:]
-                        if chunk.startswith(b"[DONE]"):
-                            break
-                        try:
-                            data = self.__decoder.decode(chunk)
-                            if "message" in data and data["message"]:
-                                yield data["message"]
-                        except Exception:
-                            raise DuckChatException(f"Couldn't parse body={chunk.decode()}")
-            except Exception as e:
-                raise DuckChatException(f"Error while streaming data: {str(e)}")
-        self.vqd.append(response.headers.get("x-vqd-4", ""))
-
-    async def ask_question_stream(self, query: str) -> AsyncGenerator[str, None]:
-        """Stream answer from chat AI"""
-        if not self.vqd:
-            await self.get_vqd()
-        self.history.add_input(query)
-
-        message_list = []
-        async for message in self.stream_answer():
-            yield message
-            message_list.append(message)
-
-        self.history.add_answer("".join(message_list))
-
-    async def reask_question_stream(self, num: int) -> AsyncGenerator[str, None]:
-        """Stream re-answer from chat AI"""
-
-        if num >= len(self.vqd):
-            num = len(self.vqd) - 1
-        self.vqd = self.vqd[:num]
-
-        if not self.history.messages:
-            raise GeneratorExit("There is no history messages")
-
-        if not self.vqd:
-            await self.get_vqd()
-            self.history.messages = [self.history.messages[0]]
-        else:
-            num = min(num, len(self.vqd))
-            self.history.messages = self.history.messages[: (num * 2 - 1)]
-
-        message_list = []
-        async for message in self.stream_answer():
-            yield message
-            message_list.append(message)
-
-        self.history.add_answer("".join(message_list))
