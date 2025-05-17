@@ -18,7 +18,7 @@ import os
 class DuckChat:
     def __init__(
         self,
-        model: ModelType = ModelType.Claude,
+        model: ModelType = ModelType.Mistral,
         session: aiohttp.ClientSession | None = None,
         user_agent: UserAgent | str = UserAgent(min_version=120.0),
     ) -> None:
