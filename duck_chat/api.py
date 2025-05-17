@@ -83,6 +83,12 @@ class DuckChat:
         with open(fileHistory,"w") as f:
             f.write(msgspec.json.encode(self.history).decode('utf-8'))
 
+    async def delete_history(self,_filename='history.json'):
+        home_folder = os.path.expanduser('~')
+        folder_path=os.path.join(home_folder, '.config','duck_chat')
+        fileHistory=os.path.join(folder_path,_filename)
+        os.remove(fileHistory)
+
     async def get_vqd(self) -> None:
         """Get new x-vqd-4 token"""
         async with self._session.get(
