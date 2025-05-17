@@ -64,6 +64,7 @@ class CLI:
     async def run(self) -> None:
         """Base loop program"""
         model = self.read_model_from_conf()
+        model = self.select_model()
         self.console.print(f"Using [u b red blink]{model.value}[/u b red blink]")
         async with DuckChat(model) as chat:
             self.console.print(f"Type [b blue]/help[/b blue] to display the help")
@@ -116,14 +117,10 @@ class CLI:
     def switch_input_mode(self, mode: str) -> None:
         if mode == "singleline":
             self.INPUT_MODE = "singleline"
-            print("Switched to singleline mode, validate is done by <enter>")
+            self.console.print("Switched to singleline mode, validate is done by <enter>")
         else:
             self.INPUT_MODE = "multiline"
-            print("Switched to multiline mode, validate is done by EOF <Ctrl+D>")
-
-    def hello(self):
-        print('hello', style='red')
-
+            self.console.print("Switched to multiline mode, validate is done by EOF <Ctrl+D>")
 
     async def command_parsing(self, args: list[str], chat: DuckChat) -> None:
         """Recognize command"""
@@ -153,7 +150,7 @@ class CLI:
                 else:
                     await chat.delete_history(ret)
             case "quit":
-                print("Quit")
+                self.console.print("Quit")
                 sys.exit(0)
             case "help":
                 self.console.print(HELP_MSG)
@@ -169,19 +166,19 @@ class CLI:
         if "`" in query:  # block of code
             self.console.print(Markdown(query))
         else:
-            print(query)
+            self.console.print(f"[green]{query}[/green]")
 
     def read_model_from_conf(self) -> ModelType:
-        filepath = Path.home() / ".config" / "hey" / "conf.toml"
+        filepath = Path.home() / ".config" / "duck_chat_conf/" / "conf.toml"
         if filepath.exists():
             with open(filepath, "rb") as f:
                 conf = tomllib.load(f)
                 model_name = conf["model"]
             if model_name in (x.name for x in ModelType):
                 if model_name == "GPT3":
-                    print("\033[1;1m GPT3 is deprecated! Use GPT4o\033[0m")
+                    self.console.print(f"[b red]GPT3 is deprecated! Use GPT4o[/b red]")
                 return ModelType[model_name]
-        return ModelType.Claude
+        return ModelType.Mistral
 
 
     def select_history_file(self, _otherOption="") -> str:
@@ -191,7 +188,6 @@ class CLI:
         if _otherOption != "":
             files.insert(0, _otherOption)
         tab_files = {str(i):item for i, item in enumerate(files,start=1)}
-        
         table = Table(show_header=True, header_style="bold red")
         table.add_column("N°")
         table.add_column("filename")
@@ -199,12 +195,25 @@ class CLI:
             table.add_row(k,v)
         # Print the table
         self.console.print(table)
-
         self.console.print()
         ret = Prompt.ask(prompt=f"Select a file between 1-{len(files)}",
                          choices=[str(i) for i in range(1,len(files)+1)])
         return tab_files[ret]
 
+    def select_model(self, _otherOption="") -> str:
+        options = list(ModelType.__members__.keys())
+        tab_options = {str(i):item for i, item in enumerate(options,start=1)}
+        table = Table(show_header=True, header_style="bold red on white")
+        table.add_column("N°")
+        table.add_column("model")
+        for k,v in tab_options.items():
+            table.add_row(k,v)
+        # Print the table
+        self.console.print(table)
+        self.console.print()
+        ret = Prompt.ask(prompt=f"Select a file between 1-{len(options)}",
+                         choices=[str(i) for i in range(1,len(options)+1)])
+        return ModelType[tab_options[ret]]
 
 
 def safe_entry_point() -> None:
