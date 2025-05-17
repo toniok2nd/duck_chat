@@ -66,7 +66,7 @@ class CLI:
         model = self.read_model_from_conf()
         self.console.print(f"Using [u b red blink]{model.value}[/u b red blink]")
         async with DuckChat(model) as chat:
-            self.console.print("Type /help to display the help",style='blue')
+            self.console.print(f"Type [b blue]/help[/b blue] to display the help")
             await chat.get_vqd()
 
             while True:
@@ -159,7 +159,7 @@ class CLI:
                 self.console.print(HELP_MSG)
             case _:
                 self.console.print("Command not found",style="red")
-                print("Type \033[1;4m/help\033[0m to display the help")
+                self.console.print(f"Type [b blue]/help[/b blue] to display the help")
                 retOk=False
         if retOk == True:
             emoji_ok = Emoji("white_heavy_check_mark")
