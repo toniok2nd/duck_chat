@@ -26,6 +26,7 @@ HELP_MSG = (
     "- [red]/quit         [/red]Quit\n"
     "- [red]/save_history [/red]Save conversation history\n"
     "- [red]/load_history [/red]Load conversation history\n"
+    "- [red]/delete_history [/red]Delete conversation history\n"
 )
 
 COMMANDS = {
@@ -34,7 +35,8 @@ COMMANDS = {
     "multiline",
     "quit",
     "save_history",
-    "load_history"
+    "load_history",
+    "delete_history"
 }
 #def setCompletion(_list: list[str]):
 
@@ -125,16 +127,31 @@ class CLI:
 
     async def command_parsing(self, args: list[str], chat: DuckChat) -> None:
         """Recognize command"""
-        self.console.print(Panel(f">>> Command mode Response {self.COUNT}:",style='white on red'))
+        retOk = True
         match args[0][1:]:
             case "singleline":
                 self.switch_input_mode("singleline")
             case "multiline":
                 self.switch_input_mode("multiline")
             case "save_history":
-                await chat.save_history()
+                ret=self.select_history_file(_otherOption="New")
+                if ret == "New":
+                    newFile = Prompt.ask(prompt="Enter new file name:\n")
+                    await chat.save_history(newFile)
+                else:
+                    await chat.save_history(ret)
             case "load_history":
-                await chat.load_history(self.select_history_file())
+                ret=self.select_history_file(_otherOption="Quit")
+                if ret == "Quit":
+                    pass
+                else:
+                    await chat.load_history(self.select_history_file())
+            case "delete_history":
+                ret=self.select_history_file(_otherOption="Quit")
+                if ret == "Quit":
+                    pass
+                else:
+                    await chat.delete_history(ret)
             case "quit":
                 print("Quit")
                 sys.exit(0)
@@ -143,6 +160,10 @@ class CLI:
             case _:
                 self.console.print("Command not found",style="red")
                 print("Type \033[1;4m/help\033[0m to display the help")
+                retOk=False
+        if retOk == True:
+            emoji_ok = Emoji("white_heavy_check_mark")
+            self.console.print(Panel(f">>> Command {args[0][:]} {emoji_ok}", style='green on black'))
 
     def answer_print(self, query: str) -> None:
         if "`" in query:  # block of code
@@ -163,13 +184,15 @@ class CLI:
         return ModelType.Claude
 
 
-    def select_history_file(self) -> str:
+    def select_history_file(self, _otherOption="") -> str:
         home_folder = os.path.expanduser('~')
         folder_path=os.path.join(home_folder, '.config','duck_chat')
         files = os.listdir(folder_path)
+        if _otherOption != "":
+            files.insert(0, _otherOption)
         tab_files = {str(i):item for i, item in enumerate(files,start=1)}
         
-        table = Table(show_header=True, header_style="bold bmagenta")
+        table = Table(show_header=True, header_style="bold red")
         table.add_column("N°")
         table.add_column("filename")
         for k,v in tab_files.items():
@@ -190,7 +213,6 @@ def safe_entry_point() -> None:
     args = parser.parse_args()
     if args.generate:
         from .models.generate_models import main as generator
-
         generator()
     else:
         asyncio.run(CLI().run())
