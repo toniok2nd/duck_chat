@@ -34,9 +34,12 @@ source VENV/bin/activate
 pip install -e .
 cd -
 
-# set alias
+# var for alias
 DIR="/etc/profile.d"
 FILE="$DIR/duck_aliases.sh"
+BINARY="start_chat.py"
+
+# set alias
 if [ -d "$DIR"]; then
   echo "Directory $DIR does not exist. Creating it now."
 else:
@@ -51,11 +54,13 @@ if [ -f "$FILE" ]; then
 else
   echo "File $FILE does not exist. Creating it now."
   # Create the file with appropriate permissions
-  sudo touch "$FILE"
+  touch "$FILE"
   # Set the correct permissions
-  sudo chmod 644 "$FILE"
+  chmod 644 "$FILE"
   echo "File $FILE created successfully."
   # Optionally, you can add some default content to the file
   echo "Adding default content to $FILE"
-  echo "alias duck_chat=./usr/local/duck_chat/start_chat.py" | tee -a "$FILE"
+  echo "alias duck_chat=.$TARGET_DIR/$BINARY" | tee -a "$FILE"
 fi
+
+source $FILE
