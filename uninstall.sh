@@ -27,3 +27,11 @@ if [ -f "$FILE" ]; then
   echo "File $FILE exists => rm $FILE"
   rm -f $FILE
 fi
+
+# unalias
+alias_name="duck_chat"
+if alias "$alias_name" >/dev/null 2>&1; then
+  echo "Unaliasing $alias_name"
+  unalias "$alias_name"
+fi
+

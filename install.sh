@@ -24,11 +24,10 @@ fi
 
 # create venv
 # delete alod VENV
-cd /usr/local/bin/duck_chat/
+cd $TARGET_DIR
 if [ -d "$TARGET_DIR/VENV/" ]; then
  rm -Rf "$TARGET_DIR/VENV/"
 fi 
-
 python3 -m venv VENV
 source VENV/bin/activate
 pip install -e .
