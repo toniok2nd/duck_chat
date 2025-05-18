@@ -18,46 +18,16 @@ source /etc/profile.d/duck_aliases.sh
 curl https://raw.githubusercontent.com/toniok2nd/duck_chat/refs/heads/main/uninstall.sh | sudo bash"
 ```
 
-## Installation
-1. Install [python 3.12](https://www.python.org/downloads/)
-
-2. Create python venv (optionally)
-
- ```bash
- python -m venv .venv && source .venv/bin/activate
- ```
-
-3. Install package
-
-   - Install auto
-   ```bash
-   pip install -U https://github.com/mrgick/duckduckgo-chat-ai/archive/master.zip
-   ```
-   - Install manually
-     1. Clone repo
-
-       ```bash
-       git clone https://github.com/mrgick/duckduckgo-chat-ai.git && cd duckduckgo-chat-ai
-       ```
-     2. Install package
-
-       ```bash
-       pip install -U .
-       ```
-
 ## Usage
 - Using terminal
 ```bash
-python -m duck_chat
-```
-or
-```
 duck_chat
 ```
-or
-```
-python start_caht.sh
-```
+![duck_chat](img/duck_chat.png)
+
+![duck_chat](img/example.png)
+
+
 
 > P.S. You can use hey config ```".config/hey/conf.toml"``` Thanks [k-aito](https://github.com/mrgick/duckduckgo-chat-ai/pull/1)
 
