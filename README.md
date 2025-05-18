@@ -7,6 +7,21 @@ A python-implemented DuckDuckGo AI chat client with model selection and dialog h
 ## Disclaimer
 By using this client you accept [DuckDuckGo AI Chat ToS](https://duckduckgo.com/aichat/privacy-terms)
 
+## Installation via curl
+```bash 
+curl https://raw.githubusercontent.com/toniok2nd/duck_chat/refs/heads/main/install.sh | sudo bash"
+```
+
+to have alias available
+
+```bash
+bash /etc/profile.d/duck_aliases.sh
+```
+
+## Uninstall via curl
+```
+curl https://raw.githubusercontent.com/toniok2nd/duck_chat/refs/heads/main/uninstall.sh | sudo bash"
+```
 
 ## Installation
 1. Install [python 3.12](https://www.python.org/downloads/)

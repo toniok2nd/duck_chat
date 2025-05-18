@@ -10,7 +10,7 @@ fi
 
 # Define the repository URL and the target directory
 REPO_URL="https://github.com/toniok2nd/duck_chat.git"
-TARGET_DIR="/usr/local/bin/duck_chat/"
+TARGET_DIR="/usr/local/bin/duck_chat"
 
 # Check if the target directory exists
 if [ -d "$TARGET_DIR" ]; then
@@ -59,7 +59,7 @@ else
   echo "File $FILE created successfully."
   # Optionally, you can add some default content to the file
   echo "Adding default content to $FILE"
-  echo "alias duck_chat=.$TARGET_DIR/$BINARY" | tee -a "$FILE"
+  echo "alias duck_chat=$TARGET_DIR/$BINARY" | tee -a "$FILE"
 fi
 
 source $FILE
