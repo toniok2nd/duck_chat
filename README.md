@@ -44,6 +44,10 @@ or
 ```
 duck_chat
 ```
+or
+```
+python start_caht.sh
+```
 
 > P.S. You can use hey config ```".config/hey/conf.toml"``` Thanks [k-aito](https://github.com/mrgick/duckduckgo-chat-ai/pull/1)
 
