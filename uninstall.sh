@@ -16,8 +16,6 @@ TARGET_DIR="/usr/local/bin/duck_chat"
 if [ -d "$TARGET_DIR" ]; then
   echo "rm $TARGET_DIR"
   rm -rf $TARGET_DIR
-else:
-  echo "Directory $TARGET_DIR does not exist"
 fi
 
 # rm alias file
