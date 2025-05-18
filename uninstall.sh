@@ -14,7 +14,7 @@ TARGET_DIR="/usr/local/bin/duck_chat"
 
 # rm git folder
 if [ -d "$TARGET_DIR" ]; then
-  echo "rm $TARGET_DIR foldet"
+  echo "rm $TARGET_DIR"
   rm -rf $TARGET_DIR
 else:
   echo "Directory $TARGET_DIR does not exist"
