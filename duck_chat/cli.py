@@ -210,7 +210,6 @@ class CLI:
             table.add_row(k,v)
         # Print the table
         self.console.print(table)
-        self.console.print()
         ret = Prompt.ask(prompt=f"Select a file between 1-{len(options)}",
                          choices=[str(i) for i in range(1,len(options)+1)])
         return ModelType[tab_options[ret]]
