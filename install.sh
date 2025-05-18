@@ -10,7 +10,7 @@ fi
 
 # Define the repository URL and the target directory
 REPO_URL="https://github.com/toniok2nd/duck_chat.git"
-TARGET_DIR="/usr/local/bin/duck_chat"
+TARGET_DIR="/usr/local/bin/duck_chat/"
 
 # Check if the target directory exists
 if [ -d "$TARGET_DIR" ]; then
