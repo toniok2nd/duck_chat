@@ -10,12 +10,7 @@ By using this client you accept [DuckDuckGo AI Chat ToS](https://duckduckgo.com/
 ## Installation via curl
 ```bash 
 curl https://raw.githubusercontent.com/toniok2nd/duck_chat/refs/heads/main/install.sh | sudo bash"
-```
-
-to have alias available
-
-```bash
-bash /etc/profile.d/duck_aliases.sh
+source /etc/profile.d/duck_aliases.sh
 ```
 
 ## Uninstall via curl
